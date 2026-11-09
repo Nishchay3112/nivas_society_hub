@@ -1,6 +1,21 @@
-node_modules
-*.db
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables / secrets
 .env
-__pycache__
-dist
-.venv
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3

@@ -6,6 +6,10 @@ from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, DateTime, Boolean, Text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from .logic import classify, match_rows, similar
+from .ai_triage import triage_complaint
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DB = os.getenv("DATABASE_URL", "sqlite:///./society.db")
 engine = create_engine(DB, connect_args={"check_same_thread": False} if DB.startswith("sqlite") else {})
@@ -137,13 +141,41 @@ def pay(b: PayIn, u: User = Depends(auth("resident")), db: Session = Depends(get
 
 @app.post("/complaints")
 def create_complaint(b: ComplaintIn, u: User = Depends(auth("resident")), db: Session = Depends(get_db)):
-    r = classify(b.text)
-    c = Complaint(flat_no=u.flat_no, text=b.text.strip(), photo=b.photo, **r)
-    c.assignee = "Duty manager" if r["safety"] else TEAM[r["category"]]  # safety rule always escalates
-    c.status = "assigned"; c.due_by = datetime.utcnow() + timedelta(hours=SLA_H[r["urgency"]])
-    for o in db.query(Complaint).filter(Complaint.status != "closed", Complaint.category == c.category, Complaint.duplicate_of.is_(None)).limit(300):
-        if o.flat_no[:3] == c.flat_no[:3] and similar(o.text, c.text): c.duplicate_of = o.id; break  # linked, never closed
-    db.add(c); db.commit(); return cj(c)
+    
+    r = triage_complaint(b.text)
+
+    c = Complaint(
+        flat_no=u.flat_no,
+        text=b.text.strip(),
+        photo=b.photo,
+        **r
+    )
+
+    c.assignee = (
+        "Duty manager" if r["safety"]
+        else TEAM[r["category"]]
+    )
+
+    c.status = "assigned"
+    c.due_by = datetime.utcnow() + timedelta(
+        hours=SLA_H[r["urgency"]]
+    )
+
+    for o in db.query(Complaint).filter(
+        Complaint.status != "closed",
+        Complaint.category == c.category,
+        Complaint.duplicate_of.is_(None)
+    ).limit(300):
+
+        if o.flat_no[:3] == c.flat_no[:3] and similar(o.text, c.text):
+            c.duplicate_of = o.id
+            break
+
+    db.add(c)
+    db.commit()
+
+    return cj(c)
+
 
 
 @app.get("/complaints")
