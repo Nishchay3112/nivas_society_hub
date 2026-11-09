@@ -32,8 +32,8 @@ A Groq API key is required for LLM-based complaint classification. The applicati
 Clone the public GitHub repository:
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd <YOUR_PROJECT_DIRECTORY>
+git clone https://github.com/Nishchay3112/nivas_society_hub.git
+cd nivas_society_hub
 ```
 
 The following instructions assume the repository contains:
