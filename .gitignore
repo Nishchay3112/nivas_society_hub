@@ -4,3 +4,7 @@ node_modules
 __pycache__
 dist
 .venv
+
+workspace.json
+workspacememory.md
+graphify-out/

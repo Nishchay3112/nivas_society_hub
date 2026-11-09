@@ -19,3 +19,7 @@ venv/
 *.db
 *.sqlite
 *.sqlite3
+
+workspace.json
+workspacememory.md
+graphify-out/
